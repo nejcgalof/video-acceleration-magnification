@@ -3,8 +3,7 @@ import ctypes
 import os
 
 # load the C library
-lib = ctypes.cdll.LoadLibrary(os.path.dirname(os.path.realpath(__file__)) +
-                              '/wrapConv.so')
+lib = ctypes.cdll.LoadLibrary(os.path.dirname(os.path.realpath(__file__)) +'/wrapConv.so')
 
 def corrDn(image = None, filt = None, edges = 'reflect1', step = (1,1), 
            start = (0,0), stop = None, result = None):

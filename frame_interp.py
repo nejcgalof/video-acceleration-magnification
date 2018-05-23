@@ -5,6 +5,7 @@ from skimage import transform
 
 
 def decompose(img, ht, n_orientations, t_width, scale, n_scales, xp=np):
+    # ht == n_scales
     lab = xp.array(color.rgb2lab(img)) / 255.
     pyramids = {'pyramids': [], 'high_pass': [], 'low_pass': [], 'phase': [], 'amplitude': [], 'pind': 0}
     for i in range(img.shape[-1]):

@@ -11,6 +11,14 @@ class SCFpyr(SFpyr):
     edges = ''
     
     #constructor
+    ''' This function decompose input image with steerable pyramid.
+       im     (M*N)     Input image with one scale;
+       ht -height     (scalar)  Number of levels of the pyramid (i.e.9); (n_scales)
+       order  (scalar)  Number of orientations in the steerable pyramid minus 1;
+       twidth (scalar)  Width of transition region;
+       scale  (scalar)  Steepness of the pyramid (i.e.0.5^(1/2));
+       nScales(scalar)  Number of levels of the pyramid (i.e.9);
+    '''
     def __init__(self, image, height, order, twidth, scale, n_scales, xp=np):    # (image, height, order, twidth, scale, n_scales)
         self.pyrType = 'steerableFrequency'
         self.image = image
@@ -22,7 +30,7 @@ class SCFpyr(SFpyr):
         self.nbands = self.order+1
 
         self.xp = xp
-        dims = np.array(self.image.shape)
+        dims = np.array(self.image.shape) #Dimension of input image.
         ctr = np.ceil((dims+0.5)/2).astype('int')
 
         (xramp, yramp) = self.xp.meshgrid((self.xp.arange(1, dims[1]+1)-ctr[1]) / (dims[1]/2.),
@@ -38,26 +46,22 @@ class SCFpyr(SFpyr):
 
         YIrcos = self.xp.sqrt(1.0 - Yrcos**2)
 
+        lo0mask = pointOp(log_rad, YIrcos, Xrcos[0], Xrcos[1] - Xrcos[0], 0)
+
         imdft = self.xp.fft.fftshift(self.xp.fft.fft2(self.image))
-        if self.xp.__name__ == 'numpy':
-            lo0mask = pointOp(log_rad, YIrcos, Xrcos[0], Xrcos[1]-Xrcos[0], 0)
-            hi0mask = pointOp(log_rad, Yrcos, Xrcos[0], Xrcos[1] - Xrcos[0], 0)
-        else:
-            lo0mask = self.xp.array(pointOp(self.xp.asnumpy(log_rad), self.xp.asnumpy(YIrcos), self.xp.asnumpy(Xrcos)[0],
-                                            self.xp.asnumpy(Xrcos)[1] - self.xp.asnumpy(Xrcos)[0], 0))
-            hi0mask = self.xp.array(pointOp(self.xp.asnumpy(log_rad), self.xp.asnumpy(Yrcos), self.xp.asnumpy(Xrcos)[0],
-                                            self.xp.asnumpy(Xrcos)[1] - self.xp.asnumpy(Xrcos)[0], 0))
-        self.pyr = []
-        self.pyrSize = []
+
+        lo0mask = lo0mask.reshape(imdft.shape[0], imdft.shape[1])
+        lodft = imdft * lo0mask
+
+        hi0mask = pointOp(log_rad, Yrcos, Xrcos[0], Xrcos[1] - Xrcos[0], 0)
 
         hi0dft = imdft * hi0mask.reshape(imdft.shape[0], imdft.shape[1])
         hi0 = self.xp.fft.ifft2(self.xp.fft.ifftshift(hi0dft))
 
+        self.pyr = []
+        self.pyrSize = []
         self.pyr.append(self.xp.real(hi0.copy()))
         self.pyrSize.append(hi0.shape)
-
-        lo0mask = lo0mask.reshape(imdft.shape[0], imdft.shape[1])
-        lodft = imdft * lo0mask
 
         # self.pind = numpy.zeros((nbands, 2))
         self.bands = []
@@ -72,35 +76,29 @@ class SCFpyr(SFpyr):
             const = (2**(2*order))*(scipy.special.factorial(order, exact=True)**2) / \
                     float(self.nbands*scipy.special.factorial(2*order, exact=True))
 
-            alfa = ( (np.pi+Xcosn) % (2.0*np.pi) ) - np.pi
+            alfa = ((np.pi+Xcosn) % (2.0*np.pi)) - np.pi
             Ycosn = 2.0 * self.xp.sqrt(const) * (self.xp.cos(Xcosn)**order) * (self.xp.abs(alfa) < np.pi/2.0).astype(int)
             log_rad_tmp = self.xp.reshape(log_rad, (1,log_rad.shape[0]* log_rad.shape[1]))
 
-            if self.xp.__name__ == 'numpy':
-                himask = pointOp(log_rad_tmp, Yrcos, Xrcos[0], Xrcos[1]-Xrcos[0], 0)
-            else:
-                himask = self.xp.array(pointOp(self.xp.asnumpy(log_rad_tmp), self.xp.asnumpy(Yrcos), self.xp.asnumpy(Xrcos)[0],
-                                               self.xp.asnumpy(Xrcos)[1] - self.xp.asnumpy(Xrcos)[0], 0))
+            himask = pointOp(log_rad_tmp, Yrcos, Xrcos[0], Xrcos[1] - Xrcos[0], 0)
 
             himask = himask.reshape(lodft.shape[0], lodft.shape[1])
+
             for b in range(self.nbands):
                 angle_tmp = self.xp.reshape(angle, (1, angle.shape[0]*angle.shape[1]))
-
-                if self.xp.__name__ == 'numpy':
-                    anglemask = pointOp(angle_tmp, Ycosn, Xcosn[0] + np.pi*b/self.nbands, Xcosn[1] - Xcosn[0], 0)
-                else:
-                    anglemask = self.xp.array(pointOp(self.xp.asnumpy(angle_tmp), self.xp.asnumpy(Ycosn),
-                                                      self.xp.asnumpy(Xcosn)[0] + np.pi * b / self.nbands,
-                                                      self.xp.asnumpy(Xcosn)[1] - self.xp.asnumpy(Xcosn)[0], 0))
+                anglemask = pointOp(angle_tmp, Ycosn, Xcosn[0] + np.pi * b / self.nbands, Xcosn[1] - Xcosn[0], 0)
                 anglemask = anglemask.reshape(lodft.shape[0], lodft.shape[1])
                 banddft = (self.xp.sqrt(-1 + 0j)**order) * lodft * anglemask * himask
-                band = self.xp.negative(self.xp.fft.ifft2(self.xp.fft.ifftshift(banddft)))
+                band = self.xp.negative(self.xp.fft.ifft2(self.xp.fft.ifftshift(banddft)))  # <-negative
                 self.bands.append(band[:].reshape(-1))
                 self.pyr.append(band.copy())
                 self.pyrSize.append(band.shape)
+
             dims = np.array(lodft.shape)
             ctr = np.ceil((dims+0.5)/2).astype('int')
+
             lodims = np.round(dims * self.scale ** (self.n_scales - self.ht + 1))
+
             loctr = np.ceil((lodims+0.5)/2).astype('int')
             lostart = ctr - loctr
             loend = (lostart + lodims).astype('int')
@@ -110,14 +108,10 @@ class SCFpyr(SFpyr):
             lodft = lodft[lostart[0]:loend[0], lostart[1]:loend[1]]
             YIrcos = self.xp.abs(self.xp.sqrt(1.0 - Yrcos**2))
             log_rad_tmp = self.xp.reshape(log_rad, (1,log_rad.shape[0]*log_rad.shape[1]))
+            lomask = pointOp(log_rad_tmp, YIrcos, Xrcos[0], Xrcos[1] - Xrcos[0], 0)
+            lodft = lodft * lomask.reshape(lodft.shape[0], lodft.shape[1])  # <- vrstni red
 
-            if self.xp.__name__ == 'numpy':
-                lomask = pointOp(log_rad_tmp, YIrcos, Xrcos[0], Xrcos[1]-Xrcos[0],0)
-            else:
-                lomask = self.xp.array(pointOp(self.xp.asnumpy(log_rad_tmp), self.xp.asnumpy(YIrcos), self.xp.asnumpy(Xrcos)[0],
-                                               self.xp.asnumpy(Xrcos)[1] - self.xp.asnumpy(Xrcos)[0], 0))
-            lodft = lodft * lomask.reshape(lodft.shape[0], lodft.shape[1])
-
+        # konec for zanke
         self.bands = self.xp.concatenate(self.bands, 0)
         lodft = self.xp.fft.ifft2(self.xp.fft.ifftshift(lodft))
         self.pyr.append(self.xp.real(self.xp.array(lodft).copy()))
