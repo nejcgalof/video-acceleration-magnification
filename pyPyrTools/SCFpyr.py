@@ -65,7 +65,7 @@ class SCFpyr(SFpyr):
 
         # self.pind = numpy.zeros((nbands, 2))
         self.bands = []
-        for i in range(self.ht - 1, -1, -1):
+        for i in range(self.ht -1, -1, -1):
             # Xrcos -= numpy.log2(2)
             Xrcos -= np.log2(1. / self.scale)
 
@@ -95,31 +95,34 @@ class SCFpyr(SFpyr):
                 self.pyrSize.append(band.shape)
 
             dims = np.array(lodft.shape)
-            ctr = np.ceil((dims+0.5)/2).astype('int')
+            ctr2=np.ceil((dims+0.5)/2.0)
+            ctr = ctr2.astype('int')#np.ceil((dims+0.5)/2)
 
-            lodims = np.round(dims * self.scale ** (self.n_scales - self.ht + 1))
+            lodims = np.round(dims * self.scale ** (self.n_scales - self.ht+1))
 
-            loctr = np.ceil((lodims+0.5)/2).astype('int')
+            loctr = np.int64(np.ceil((lodims+0.5)/2.0))
             lostart = ctr - loctr
-            loend = (lostart + lodims).astype('int')
+            loend = np.int64((lostart + lodims))
 
             log_rad = log_rad[lostart[0]:loend[0], lostart[1]:loend[1]]
             angle = angle[lostart[0]:loend[0], lostart[1]:loend[1]]
             lodft = lodft[lostart[0]:loend[0], lostart[1]:loend[1]]
             YIrcos = self.xp.abs(self.xp.sqrt(1.0 - Yrcos**2))
-            log_rad_tmp = self.xp.reshape(log_rad, (1,log_rad.shape[0]*log_rad.shape[1]))
+            log_rad_tmp = self.xp.reshape(log_rad, (1, log_rad.shape[0]*log_rad.shape[1]))
             lomask = pointOp(log_rad_tmp, YIrcos, Xrcos[0], Xrcos[1] - Xrcos[0], 0)
-            lodft = lodft * lomask.reshape(lodft.shape[0], lodft.shape[1])  # <- vrstni red
+            lodft = lodft * lomask.reshape(lodft.shape[0], lodft.shape[1])   # <- vrstni red
 
         # konec for zanke
         self.bands = self.xp.concatenate(self.bands, 0)
         lodft = self.xp.fft.ifft2(self.xp.fft.ifftshift(lodft))
         self.pyr.append(self.xp.real(self.xp.array(lodft).copy()))
+        #arr = [item for sublist in self.pyr for item in sublist for i in item]
         self.pyrSize.append(lodft.shape)
         self.pyrSize = np.array(self.pyrSize)
 
     def band(self, bandNum):
         return self.xp.array(self.pyr[bandNum])
+        #return
 
     def spyrHt(self):
         return self.ht
@@ -133,6 +136,35 @@ class SCFpyr(SFpyr):
     def pyrHigh(self):
         return self.xp.array(self.band(0))
 
+    def pyrBandIndices(self, pind, band):
+        ind=0
+        for l in range(0,band):
+            ind=ind+np.prod(pind[l,:])
+        return range(ind, ind+np.prod(pind[band,:]))
+
+    def spyrHigh(self, nlevel, orientation):
+        if nlevel==0:
+            res=np.reshape(self.pyr[self.pyrBandIndices(self.pyrSize, 1)], (self.pyrSize[0,0], self.pyrSize[0,1]))
+            return res
+        else:
+            band=nlevel*orientation
+            ind=0
+            for l in range(0, band+1):
+                ind=ind+np.prod(self.pyrSize[l,:])
+            res=self.pyr[0:ind-1]
+
+    def spyrLow(self, nlevel, orientation):
+        if nlevel==0:
+            band=len(self.pyrSize)-1
+            res=np.reshape(self.pyr[self.pyrBandIndices(self.pyrSize, band)], (self.pyrSize[band,0], self.pyrSize[band,1]))
+            return res
+        else:
+            band=nlevel*orientation
+            ind=0
+            for l in np.arange(len(self.pyrSize)-1, len(self.pyrSize)-band, -1):
+                ind=ind+np.prod(self.pyrSize[l,:])
+            res=self.pyr[len(self.pyr)-ind-1:len(self.pyr)]
+            return res
     # methods
     def reconPyr(self, levs='all', bands='all'):
         pind = self.pyrSize
