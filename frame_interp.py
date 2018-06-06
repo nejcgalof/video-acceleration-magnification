@@ -48,6 +48,21 @@ def shift_correction(pyr, pyramid, *args):
     corrected_pyr = corrected_pyr[1:len(corrected_pyr) - 1]
     return corrected_pyr
 
+def shift_correction1(pyr, pyramid, *args):
+    n_high_elems = pyramid.pyrSize[0]
+    n_low_elems = pyramid.pyrSize[-1]
+    corrected_pyr = list(pyr)
+    corrected_pyr.insert(0, np.zeros(n_high_elems))
+    corrected_pyr.append(np.zeros(n_low_elems))
+    n_levels = pyramid.spyrHt()
+    n_bands = pyramid.numBands()
+    for level in range(n_levels - 1, -1, -1):
+        corrected_level = correct_level(corrected_pyr, pyramid, level, *args)
+        start_ind = 1 + n_bands * level
+        corrected_pyr[start_ind:start_ind+n_bands] = corrected_level
+    corrected_pyr = corrected_pyr[1:len(corrected_pyr) - 1]
+    return corrected_pyr
+
 
 def correct_level(pyr, pyramid, level, *args):
     scale = args[0]
@@ -91,6 +106,7 @@ def correct_level(pyr, pyramid, level, *args):
                 low_level[to_fix] = 0.
             out_level.append(low_level)
     return out_level
+
 
 
 def unwrap(p, cutoff=np.pi, xp=np):
