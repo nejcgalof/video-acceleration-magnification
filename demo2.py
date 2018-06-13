@@ -10,6 +10,7 @@ from frame_interp import interpolate_frame
 from frame_interp import decompose
 from frame_interp import shift_correction
 from frame_interp import unwrap
+from frame_interp import reconstruct_image
 
 def convert_back_pyr(phase, im_stru):
     reconstructed=[]
@@ -27,6 +28,21 @@ def convert_back_pyr(phase, im_stru):
         reconstructed.append(f_dimension)
     return np.array(reconstructed)
 
+def reconstruct_pyr(arr, pind):
+    reconstructed=[]
+    for i in range(3):
+        f_dimension=[]
+        start=0
+        stop=0
+        for dim in pind:
+            stop+=(dim[0]*dim[1])
+            #print(stop)
+            pyramid=arr[i, start:stop]
+            start=stop
+            f_dimension.append(np.reshape(pyramid, dim))
+        reconstructed.append(f_dimension)
+    return np.array(reconstructed)
+
 def convert_back_pyr_1d(phase, im_stru):
     f_dimension=[]
     start=0
@@ -39,6 +55,15 @@ def convert_back_pyr_1d(phase, im_stru):
         start=stop
         f_dimension.append(np.reshape(pyramid, dim))
     return np.array(f_dimension)
+
+def append_all(high, new, low):
+    out_pyr=[]
+    for i in range(3):
+        high_dim=high[i].flatten()
+        high_dim=np.append(high_dim, new[:,i])
+        high_dim=np.append(high_dim, low[i].flatten())
+        out_pyr.append(high_dim)
+    return np.asarray(out_pyr)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -105,8 +130,14 @@ if __name__ == '__main__':
     for ii in range(2, 50):
         ret, im = cap.read()
         im = cv2.cvtColor(im, cv2.COLOR_BGR2Lab)
+        im1 = cv2.cvtColor(im, cv2.COLOR_Lab2BGR)
+        cv2.imwrite('frame'+str(ii)+'.png', im1)
         im_stru = decompose(im, n_scales, nOrientations, tWidth, scale, n_scales, xp)
-
+        rec_img=reconstruct_image(im_stru)
+        rec_img = rec_img*255
+        rec_img = rec_img.astype(np.uint8)
+        rec_img = cv2.cvtColor(rec_img, cv2.COLOR_Lab2BGR)
+        cv2.imwrite('framee'+str(ii)+'.png', rec_img)
         fac = 1.5
         phase_im_1 = [item for i in im_stru['phase'] for it in i for itm in it for item in itm]
         phase_im_1 = np.array(phase_im_1)
@@ -134,9 +165,27 @@ if __name__ == '__main__':
             tmp_phase_diff_org=[item for i in phase_diff_original[ic] for it in i for item in it]
             unwrappedPhaseDifference = unwrap(np.array([tmp_phase_diff, tmp_phase_diff_org]))
             phase_diff[ic]=convert_back_pyr_1d(unwrappedPhaseDifference[1,:], im_stru)
-        cv2.imshow('frame', im)
-        cv2.waitKey(1)
 
+        # Motion magnification
+        print("motion magnification frame")
+        phase_diff = [item for i in phase_diff for it in i for itm in it for item in itm]
+        phase_diff = np.reshape(phase_diff,(-1,3))
+        if amp_factor >= 1:
+            new_pyrv = amp_im2*np.exp(1j*(ph2mag+amp_factor*phase_diff))
+        else:
+            new_pyrv = amp_im2 * np.exp(1j * (ph2mag + (amp_factor-1) * phase_diff))
+
+
+        new_pyr = np.reshape(new_pyrv,(-1,3))
+        out_pyr = append_all(im_stru['high_pass'], new_pyr, im_stru['low_pass'])
+        out_pyr=reconstruct_pyr(out_pyr, pind)
+        for ch in range(3):
+            im_stru['pyramids'][ch].pyr=out_pyr[ch].copy()
+        rec_img=reconstruct_image(im_stru)
+        rec_img = rec_img*255
+        rec_img = rec_img.astype(np.uint8)
+        rec_img = cv2.cvtColor(rec_img, cv2.COLOR_Lab2BGR)
+        cv2.imwrite('frame'+str(ii)+'.png', rec_img)
     cap.release()
     print('Took %.2fm' % ((time.time() - start) / 60.))
 

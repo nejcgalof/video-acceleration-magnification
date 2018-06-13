@@ -146,10 +146,10 @@ def reconstruct_image(pyr):
     out_img = xp.zeros((pyr['pyramids'][0].pyrSize[0][0], pyr['pyramids'][0].pyrSize[0][1], 3))
     for i, pyr in enumerate(pyr['pyramids']):
         out_img[..., i] = pyr.reconPyr('all', 'all')
-    if xp.__name__ == 'numpy':
-        out_img = color.lab2rgb(out_img * 255.)
-    else:
-        out_img = color.lab2rgb(xp.asnumpy(out_img) * 255.)
+    #if xp.__name__ == 'numpy':
+    #out_img = color.lab2rgb(out_img * 255.)
+    #else:
+        #out_img = color.lab2rgb(xp.asnumpy(out_img) * 255.)
     return out_img
 
 
