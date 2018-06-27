@@ -66,18 +66,18 @@ def append_all(high, new, low):
     return np.asarray(out_pyr)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('img1', type=str, help='Path to first frame.')
-    parser.add_argument('img2', type=str, help='Path to second frame.')
-    parser.add_argument('--n_frames', '-n', type=int, default=1, help='Number of new frames.')
-    parser.add_argument('--show', '-sh', type=int, default=0, help='Display result.')
-    parser.add_argument('--save', '-s', type=int, default=0, help='Save interpolated images.')
-    parser.add_argument('--save_path', '-p', type=str, default='', help='Output path.')
-    args = parser.parse_args()
+    #parser = argparse.ArgumentParser()
+    #parser.add_argument('img1', type=str, help='Path to first frame.')
+    #parser.add_argument('img2', type=str, help='Path to second frame.')
+    #parser.add_argument('--n_frames', '-n', type=int, default=1, help='Number of new frames.')
+    #parser.add_argument('--show', '-sh', type=int, default=0, help='Display result.')
+    #parser.add_argument('--save', '-s', type=int, default=0, help='Save interpolated images.')
+    #parser.add_argument('--save_path', '-p', type=str, default='', help='Output path.')
+    #args = parser.parse_args()
     xp = np
 
-    img1 = misc.imread(args.img1)
-    img2 = misc.imread(args.img2)
+    #img1 = misc.imread(args.img1)
+    #img2 = misc.imread(args.img2)
 
     print('start')
     start = time.time()
