@@ -106,7 +106,7 @@ if __name__ == '__main__':
     print('start')
     start = time.time()
     print(cv2.__version__)
-    cap = cv2.VideoCapture('syn_ball.avi')
+    cap = cv2.VideoCapture('gun_shot.avi')
     vidHeight = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     vidWidth = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     nChannels = 3
@@ -144,18 +144,19 @@ if __name__ == '__main__':
     INT_kernel[2 * frame_interval] = -1
     INT_kernel[3 * frame_interval] = 0.5
     kernel = -INT_kernel / sum(abs(INT_kernel))
-    kernel = np.reshape(kernel, (13, 1))
+    kernel = np.reshape(kernel, (kernel.shape[0], 1))
     ret, im = cap.read()
     im = cv2.cvtColor(im, cv2.COLOR_BGR2Lab)
     im_stru = decompose(im, n_scales, nOrientations, tWidth, scale, n_scales, xp)
     phase_im_1=im_stru['phase'].copy()
-    phase_im=repmat(phase_im_1, 13)
+    phase_im=repmat(phase_im_1, kernel.shape[0])
     #phase_im_1 = [item for i in im_stru['phase'] for it in i for itm in it for item in itm]
     # phase_im = np.matlib.repmat(phase_im_1, 1, norder+1)
     #phase_im = np.tile(phase_im_1, (norder + 1, 1))  # .transpose()
     cv2.imwrite("izhod.png", im)
-
-    for ii in range(2, 50):
+    fr_num=int(fr_num)
+    print("processing", fr_num, "frames.")
+    for ii in range(2, fr_num):
         ret, im = cap.read()
         im = cv2.cvtColor(im, cv2.COLOR_BGR2Lab)
         #cv2.imwrite('frameorg'+str(ii)+'.png', im1)
@@ -197,7 +198,7 @@ if __name__ == '__main__':
 
         del phase_diff_original
         # Motion magnification
-        print("motion magnification frame")
+        print("motion magnification frame", ii)
         new_pyr=[]
         for i in range(amp_im2.shape[0]):
             ch=[]
@@ -229,9 +230,9 @@ if __name__ == '__main__':
         rec_img = reconstruct_image(im_stru)
         rec_img[rec_img>1]=1
         rec_img[rec_img<0]=0
-        plt.imshow(rec_img, interpolation='none')
-        plt.colorbar()
-        plt.show()
+        #plt.imshow(rec_img, interpolation='none')
+        #plt.colorbar()
+        #plt.show()
         #print(np.min(rec_img), np.max(rec_img))
         rec_img = rec_img*255
         rec_img = rec_img.astype(np.uint8)
