@@ -100,12 +100,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
     xp = np
 
-    #img1 = misc.imread(args.img1)
-    #img2 = misc.imread(args.img2)
-
-    print('start')
+    print('starting algorithm')
     start = time.time()
-    print(cv2.__version__)
+    print('using opencv', cv2.__version__)
     cap = cv2.VideoCapture('gun_shot.avi')
     vidHeight = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     vidWidth = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -113,7 +110,7 @@ if __name__ == '__main__':
     frame_rate = cap.get(cv2.CAP_PROP_FPS)
     fr_num = cap.get(cv2.CAP_PROP_FRAME_COUNT)
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWriter('output.avi', fourcc, frame_rate, (vidWidth, vidHeight))
+    #out = cv2.VideoWriter('output.avi', fourcc, frame_rate, (vidWidth, vidHeight))
 
     nOrientations = 8
     tWidth = 1
@@ -153,10 +150,10 @@ if __name__ == '__main__':
     #phase_im_1 = [item for i in im_stru['phase'] for it in i for itm in it for item in itm]
     # phase_im = np.matlib.repmat(phase_im_1, 1, norder+1)
     #phase_im = np.tile(phase_im_1, (norder + 1, 1))  # .transpose()
-    cv2.imwrite("izhod.png", im)
+    #cv2.imwrite("izhod.png", im)
     fr_num=int(fr_num)
     print("processing", fr_num, "frames.")
-    for ii in range(2, fr_num):
+    for ii in range(1, fr_num):
         ret, im = cap.read()
         im = cv2.cvtColor(im, cv2.COLOR_BGR2Lab)
         #cv2.imwrite('frameorg'+str(ii)+'.png', im1)
@@ -243,6 +240,6 @@ if __name__ == '__main__':
         gc.collect()
         #out.write(rec_img)
     cap.release()
-    out.release()
+    #out.release()
     print('Took %.2fm' % ((time.time() - start) / 60.))
 
