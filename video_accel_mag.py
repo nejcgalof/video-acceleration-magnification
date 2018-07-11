@@ -103,7 +103,7 @@ if __name__ == '__main__':
     print('starting algorithm')
     start = time.time()
     print('using opencv', cv2.__version__)
-    cap = cv2.VideoCapture('gun_shot.avi')
+    cap = cv2.VideoCapture('../v-a-m tests/syn_ball.avi')
     vidHeight = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     vidWidth = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     nChannels = 3
