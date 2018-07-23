@@ -35,3 +35,7 @@ We show results with alpha 5 and pylevel 4. More results in `./gifs`.
 ![gun_shot_alpha_5_pylevel_4](./gifs/gun_shot_alpha_5_pylevel_4.gif)
 ![kitara_alpha_4_pylevel_4](./gifs/kitara_alpha_4_pylevel_4.gif)
 ![roka_alpha_5_pylevel_4](./gifs/roka_alpha_5_pylevel_4.gif)
+
+## Authors
+
+Blaž Sitar and Nejc Galof
