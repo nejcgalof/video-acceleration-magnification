@@ -91,10 +91,10 @@ def roll_and_append(arr1, arr2):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    #parser.add_argument('img1', type=str, help='Path to first frame.')
+    parser.add_argument('input_video', type=str, help='Path to video.')
     #parser.add_argument('img2', type=str, help='Path to second frame.')
-    #parser.add_argument('--n_frames', '-n', type=int, default=1, help='Number of new frames.')
-    #parser.add_argument('--show', '-sh', type=int, default=0, help='Display result.')
+    parser.add_argument('--py_level', '-p', type=int, default=4, help='Levels of pyramid.')
+    parser.add_argument('--alpha', '-a', type=int, default=4, help='Alpha parameter.')
     #parser.add_argument('--save', '-s', type=int, default=0, help='Save interpolated images.')
     #parser.add_argument('--save_path', '-p', type=str, default='', help='Output path.')
     args = parser.parse_args()
@@ -103,7 +103,8 @@ if __name__ == '__main__':
     print('starting algorithm')
     start = time.time()
     print('using opencv', cv2.__version__)
-    cap = cv2.VideoCapture('../v-a-m tests/syn_ball.avi')
+    #cap = cv2.VideoCapture('../v-a-m tests/syn_ball.avi')
+    cap = cv2.VideoCapture(str(args.input_video))
     vidHeight = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     vidWidth = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     nChannels = 3
@@ -117,13 +118,13 @@ if __name__ == '__main__':
     limit = 0.2
     min_size = 15
     max_levels = 23
-    py_level = 4
+    py_level = args.py_level
     scale = 0.5 ** (1 / py_level)
     n_scales = min(np.ceil(np.log2(min((vidHeight, vidWidth))) / np.log2(1. / scale) -
                            (np.log2(min_size) / np.log2(1 / scale))).astype('int'), max_levels)
     motion_freq_es = 10 / 3
     time_interval = 1 / 4 * 1 / motion_freq_es
-    amp_factor = 5
+    amp_factor = args.alpha
     # motionAMP
     frame_interval = np.ceil(frame_rate * time_interval).astype(int)
     windowSize = 2 * frame_interval
