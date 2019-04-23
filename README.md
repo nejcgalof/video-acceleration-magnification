@@ -38,4 +38,4 @@ We show results with alpha 5 and pylevel 4. More results in `./gifs`.
 
 ## Authors
 
-Blaž Sitar and Nejc Galof
+[Blaž Sitar](https://github.com/BSitar) and Nejc Galof
